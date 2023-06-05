@@ -34,27 +34,31 @@ def uploadMusic(message):
     text = "Чтобы загрузить треки - напиши их названия и исполнителя. Каждый трек с новой строки."
     bot.send_message(message.from_user.id, text)
     bot.register_next_step_handler(message, search_songs)
-    
+
 def search_songs(message):
     query = message.text.split("\n")
     counter = 0
     text = ""
+    flag = True
     print(query)
     for i in query:
         search_result = client.search(i)
-        playlist = client.usersPlaylists("1037")
-        track = search_result.tracks.results[0]
-        if track:
-            text = text + str(counter + 1) + ") " + track.artists[0].name + " - " + track.title + "\n"
-            counter = counter + 1
-            playlist.insertTrack(track.id, track.albums[0].id)
+        if search_result.best:
+            playlist = client.usersPlaylists("1037")
+            track = search_result.tracks.results[0]
+            if track:
+                text = text + str(counter + 1) + ") " + track.artists[0].name + " - " + track.title + "\n"
+                counter = counter + 1
+                playlist.insertTrack(track.id, track.albums[0].id)
 
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     key_donate = telebot.types.KeyboardButton("/donate")
     key_uploadMusic = telebot.types.KeyboardButton("/uploadMusic")
     markup.add(key_donate, key_uploadMusic)
+    if len(query) > counter:
+        bot.send_message(message.from_user.id, "К сожалению, у меня не получилось добавить все треки((((")
     text = "Я добавил " + str(counter) + " трека(-ов):\n" + text
-    bot.send_message(message.from_user.id, text, reply_markup=markup)
+    bot.send_message(message.from_user.id, text)
     text =  "Посмотреть плейлист ты можешь по [ссылке](https://music.yandex.ru/users/odaniilos/playlists/1037)\."
     bot.send_message(message.from_user.id, text, reply_markup=markup, parse_mode='MarkdownV2')
     text = "Что ты хочешь сделать теперь?"
